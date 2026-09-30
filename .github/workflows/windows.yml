@@ -19,6 +19,24 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Install frontend dependencies
         run: npm install
+      - name: Create temporary Windows icon
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path src-tauri/icons | Out-Null
+          Add-Type -AssemblyName System.Drawing
+          $bmp = New-Object System.Drawing.Bitmap 64,64
+          $gfx = [System.Drawing.Graphics]::FromImage($bmp)
+          $gfx.Clear([System.Drawing.Color]::FromArgb(8,16,21))
+          $font = New-Object System.Drawing.Font('Segoe UI',28,[System.Drawing.FontStyle]::Bold)
+          $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(174,184,194))
+          $gfx.DrawString('O',$font,$brush,8,10)
+          $hIcon = $bmp.GetHicon()
+          $icon = [System.Drawing.Icon]::FromHandle($hIcon)
+          $fs = New-Object System.IO.FileStream('src-tauri/icons/icon.ico',[System.IO.FileMode]::Create)
+          $icon.Save($fs)
+          $fs.Close()
+          $gfx.Dispose()
+          $bmp.Dispose()
       - name: Build OpenPlay installer
         run: npm run tauri:build
       - uses: actions/upload-artifact@v4
